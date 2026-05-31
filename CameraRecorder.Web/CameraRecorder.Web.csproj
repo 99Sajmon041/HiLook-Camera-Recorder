@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Entities\" />
-    <Folder Include="Services\Implementations\" />
-    <Folder Include="Services\Interfaces\" />
+    <Folder Include="Services\Account\" />
+    <Folder Include="Services\Monitoring\" />
     <Folder Include="ViewModels\" />
+    <Folder Include="Views\Account\" />
   </ItemGroup>
 
   <ItemGroup>

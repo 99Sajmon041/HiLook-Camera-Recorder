@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Configuration file
 appsettings.json
+
+# login file
+login.txt
