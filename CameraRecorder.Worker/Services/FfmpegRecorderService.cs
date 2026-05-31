@@ -22,10 +22,11 @@ public sealed class FfmpegRecorderService
         Directory.CreateDirectory(cameraSettings.OutputFolder);
 
         var fileName = $"camera_{DateTime.Now:yyyyMMdd_HHmmss}.mp4";
-        var outputFile = Path.Combine(cameraSettings.OutputFolder, fileName);
 
-        var arguments = $"-rtsp_transport tcp -i \"{cameraSettings.RtspUrl}\" -t {cameraSettings.SegmentMinutes * 60} -c copy \"{outputFile}\"";
+        var finalFile = Path.Combine(cameraSettings.OutputFolder, fileName);
+        var temporaryFile = Path.ChangeExtension(finalFile, ".recording");
 
+        var arguments = $"-rtsp_transport tcp -i \"{cameraSettings.RtspUrl}\" -t {cameraSettings.SegmentMinutes * 60} -c copy \"{temporaryFile}\"";
         var startInfo = new ProcessStartInfo
         {
             FileName = cameraSettings.FfmpegPath,
@@ -61,6 +62,8 @@ public sealed class FfmpegRecorderService
                 process.Kill(entireProcessTree: true);
                 await process.WaitForExitAsync();
             }
+
+            throw;
         }
 
         var error = await errorTask;
@@ -68,6 +71,8 @@ public sealed class FfmpegRecorderService
 
         if (process.ExitCode == 0)
         {
+            File.Move(temporaryFile, finalFile, overwrite: true);
+
             logger.LogInformation("FFmpeg finished successfully.");
             logger.LogInformation("FFmpeg log: {error}", error);
         }
