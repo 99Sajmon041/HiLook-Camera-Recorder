@@ -1,24 +1,35 @@
-namespace CameraRecorder.Worker
+using CameraRecorder.Worker.Services;
+using CameraRecorder.Worker.Settings;
+using Microsoft.Extensions.Options;
+
+namespace CameraRecorder.Worker;
+
+public sealed class Worker : BackgroundService
 {
-    public class Worker : BackgroundService
+    private readonly ILogger<Worker> logger;
+    private readonly CameraSettings cameraSettings;
+    private readonly FfmpegRecorderService ffmpegRecorderService;
+
+    public Worker(ILogger<Worker> logger, IOptions<CameraSettings> cameraSettings, FfmpegRecorderService ffmpegRecorderService)
     {
-        private readonly ILogger<Worker> _logger;
+        this.logger = logger;
+        this.cameraSettings = cameraSettings.Value;
+        this.ffmpegRecorderService = ffmpegRecorderService;
+    }
 
-        public Worker(ILogger<Worker> logger)
-        {
-            _logger = logger;
-        }
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        logger.LogInformation("Camera recorder started.");
+        logger.LogInformation("Camera name: {name}", cameraSettings.Name);
+        logger.LogInformation("Output folder: {folder}", cameraSettings.OutputFolder);
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                if (_logger.IsEnabled(LogLevel.Information))
-                {
-                    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                }
-                await Task.Delay(1000, stoppingToken);
-            }
+            await ffmpegRecorderService.RecordSegmentAsync(stoppingToken);
+
+            ffmpegRecorderService.DeleteOldRecordings();
+
+            logger.LogInformation("Segment finished.");
         }
     }
 }
