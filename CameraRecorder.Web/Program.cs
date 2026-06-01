@@ -1,6 +1,8 @@
 using CameraRecorder.Web.Database;
 using CameraRecorder.Web.Entities;
 using CameraRecorder.Web.Identity;
+using CameraRecorder.Web.Services.Account;
+using CameraRecorder.Web.Services.Monitoring;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -9,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddScoped<IMonitoringService, MonitoringService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 builder.Services.AddDbContext<CameraRecorderDbContext>(options =>
 {
@@ -42,7 +46,7 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
-app.MapControllerRoute(name: "default", pattern: "{controller=Monitoring}/{action=Index}")
+app.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Login}")
     .WithStaticAssets();
 
 app.Run();

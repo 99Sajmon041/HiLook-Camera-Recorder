@@ -14,6 +14,7 @@ public sealed class ApplicationUserClaimsPrincipalFactory(
     {
         ClaimsIdentity identity = await base.GenerateClaimsAsync(user);
 
+        identity.AddClaim(new Claim("Id", user.Id));
         identity.AddClaim(new Claim("first_name", user.FirstName ?? string.Empty));
         identity.AddClaim(new Claim("last_name", user.LastName ?? string.Empty));
 
