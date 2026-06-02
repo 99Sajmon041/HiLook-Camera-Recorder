@@ -3,6 +3,7 @@ using CameraRecorder.Web.Entities;
 using CameraRecorder.Web.Identity;
 using CameraRecorder.Web.Services.Account;
 using CameraRecorder.Web.Services.Monitoring;
+using CameraRecorder.Web.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -35,6 +36,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
 });
+
+builder.Services.Configure<RecordingStorageSettings>(
+    builder.Configuration.GetSection("RecordingStorage"));
 
 var app = builder.Build();
 
