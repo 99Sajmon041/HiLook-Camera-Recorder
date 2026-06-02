@@ -1,5 +1,37 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@model RecordingDetailViewModel
+
+<h1>Záznam</h1>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <strong>@Model.FileName</strong>
+    </div>
+
+    <div class="card-body">
+        <video controls class="w-100 rounded mb-3">
+            <source src="@Url.Action("Video", "Monitoring", new { fileName = Model.FileName })" type="video/mp4" />
+            Váš prohlížeč nepodporuje přehrávání videa.
+        </video>
+
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Vytvořeno</dt>
+            <dd class="col-sm-9">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")</dd>
+
+            <dt class="col-sm-3">Velikost</dt>
+            <dd class="col-sm-9">@(Model.SizeBytes / 1024 / 1024) MB</dd>
+
+            <dt class="col-sm-3">Délka</dt>
+            <dd class="col-sm-9">@Model.DurationTime.ToString("HH:mm")</dd>
+        </dl>
+    </div>
+
+    <div class="card-footer d-flex gap-2">
+        <a asp-controller="Monitoring" asp-action="Index" class="btn btn-secondary btn-sm">
+            Zpět
+        </a>
+
+        <a asp-controller="Monitoring"  asp-action="Download"  asp-route-fileName="@Model.FileName" class="btn btn-outline-primary btn-sm">
+            Stáhnout
+        </a>
+    </div>
+</div>

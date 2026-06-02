@@ -2,7 +2,7 @@ using CameraRecorder.Web.Database;
 using CameraRecorder.Web.Entities;
 using CameraRecorder.Web.Identity;
 using CameraRecorder.Web.Services.Account;
-using CameraRecorder.Web.Services.Monitoring;
+using CameraRecorder.Web.Services.RecordingFile;
 using CameraRecorder.Web.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,8 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IRecordingFileService, RecordingFileService>();
 
 builder.Services.AddDbContext<CameraRecorderDbContext>(options =>
 {

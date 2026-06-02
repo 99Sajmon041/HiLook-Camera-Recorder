@@ -1,8 +1,57 @@
-﻿@{
-    ViewData["Title"] = "Seznam záznamů";
-}
+﻿@model RecordingListViewModel
 
-<div class="text-center">
-    <h1 class="display-4">Přehled</h1>
-    <p>Seznam záznamů za den: xx.yy.zzzz</p>
-</div>
+<h1>Záznamy</h1>
+
+<form method="get" asp-action="Index" class="d-flex gap-2 align-items-center mb-3">
+    <label for="inputDate" class="form-label mb-0">Datum záznamů</label>
+    <input id="inputDate" type="date" name="selectedDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" class="form-control w-auto" onchange="this.form.submit()" />
+</form>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Soubor</th>
+            <th>Vytvořeno</th>
+            <th>Velikost</th>
+            <th>Délka</th>
+            <th>Akce</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Recordings.Count > 0)
+        {
+            @foreach (var item in Model.Recordings)
+            {
+                <tr>
+                    <td>@item.FileName</td>
+                    <td>@item.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                    <td>@(item.SizeBytes / 1024 / 1024) MB</td>
+                    <td>@item.DurationTime.ToString("HH:mm")</td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-outline-primary btn-sm" asp-controller="Monitoring" asp-action="Detail" asp-route-fileName="@item.FileName">
+                                Přehrát
+                            </a>
+
+                            <form method="post" asp-controller="Monitoring" asp-action="Delete" asp-route-fileName="@item.FileName" onsubmit="return confirm('Opravdu chcete smazat tento záznam?');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    Smazat
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5" class="text-center">
+                    <div class="bg-warning text-dark p-2 rounded">
+                        Žádné záznamy pro tento den.
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
