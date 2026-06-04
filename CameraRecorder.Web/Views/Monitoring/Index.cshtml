@@ -10,10 +10,10 @@
 <table class="table table-striped align-middle">
     <thead>
         <tr>
-            <th>Soubor</th>
+            <th>Název souboru</th>
             <th>Vytvořeno</th>
-            <th>Velikost</th>
-            <th>Délka</th>
+            <th>Velikost (MB)</th>
+            <th>Délka (minuty)</th>
             <th>Akce</th>
         </tr>
     </thead>
@@ -33,7 +33,7 @@
                                 Přehrát
                             </a>
 
-                            <form method="post" asp-controller="Monitoring" asp-action="Delete" asp-route-fileName="@item.FileName" onsubmit="return confirm('Opravdu chcete smazat tento záznam?');">
+                            <form method="post" asp-controller="Monitoring" asp-action="Delete" asp-route-fileName="@item.FileName" asp-route-date="@item.CreatedAt.ToString("yyyy-MM-dd")" onsubmit="return confirm('Opravdu chcete smazat tento záznam?');">
                                 <button type="submit" class="btn btn-outline-danger btn-sm">
                                     Smazat
                                 </button>

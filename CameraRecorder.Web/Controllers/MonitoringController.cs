@@ -33,13 +33,22 @@ public sealed class MonitoringController(IRecordingFileService recordingFileServ
         return PhysicalFile(filePath, "video/mp4", enableRangeProcessing: true);
     }
 
-    public IActionResult Delete(string fileName)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Delete(string fileName, DateOnly date)
     {
-        return View();
+        var (deleted, message) = recordingFileService.DeleteRecord(fileName);
+
+        TempData[deleted ? "success" : "error"] = message;
+
+        return RedirectToAction(nameof(Index), new { selectedDate = date });
     }
 
+    [HttpGet]
     public IActionResult Download(string fileName)
     {
-        return View();
+        var filePath = recordingFileService.GetSafeFilePath(fileName);
+
+        return PhysicalFile(filePath, "video/mp4", Path.GetFileName(filePath));
     }
 }

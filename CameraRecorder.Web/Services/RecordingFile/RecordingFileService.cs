@@ -66,4 +66,25 @@ public sealed class RecordingFileService(IOptions<RecordingStorageSettings> opti
             SizeBytes = fileInfo.Length
         };
     }
+
+    public (bool, string) DeleteRecord(string fileName)
+    {
+        var safeFileName = Path.GetFileName(fileName);
+        var fullPath = Path.Combine(settings.RecordingsFolder, safeFileName);
+
+        if (!File.Exists(fullPath))
+        {
+            return (false, "Soubor nebyl nalezen.");
+        }
+
+        try
+        {
+            File.Delete(fullPath);
+            return (true, "Soubor úspěšně smazán.");
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Soubor se nepodařilo odstranit. Error: {ex.Message}.");
+        }
+    }
 }
