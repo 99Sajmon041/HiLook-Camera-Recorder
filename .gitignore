@@ -362,8 +362,13 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# Configuration file
-appsettings.json
+# Configuration file WEB
+CameraRecorder.Worker/appsettings.json
+CameraRecorder.Worker/appsettings.Development.json
+
+# Configuration file WORKER
+CameraRecorder.Web/appsettings.json
+CameraRecorder.Web/appsettings.Development.json
 
 # login file
 login.txt
