@@ -9,12 +9,14 @@ public sealed class Worker : BackgroundService
     private readonly ILogger<Worker> logger;
     private readonly CameraSettings cameraSettings;
     private readonly FfmpegRecorderService ffmpegRecorderService;
+    private readonly CameraEventService cameraEventService;
 
-    public Worker(ILogger<Worker> logger, IOptions<CameraSettings> cameraSettings, FfmpegRecorderService ffmpegRecorderService)
+    public Worker(ILogger<Worker> logger, IOptions<CameraSettings> cameraSettings, FfmpegRecorderService ffmpegRecorderService, CameraEventService cameraEventService)
     {
         this.logger = logger;
         this.cameraSettings = cameraSettings.Value;
         this.ffmpegRecorderService = ffmpegRecorderService;
+        this.cameraEventService = cameraEventService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -25,11 +27,35 @@ public sealed class Worker : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await ffmpegRecorderService.RecordSegmentAsync(stoppingToken);
+            try
+            {
+                var motionDetected = await cameraEventService.IsMotionDetectedAsync(stoppingToken);
+                if (motionDetected)
+                {
+                    logger.LogInformation("Motion detected. Recording segment started.");
 
-            ffmpegRecorderService.DeleteOldRecordings();
+                    await ffmpegRecorderService.RecordSegmentAsync(stoppingToken);
 
-            logger.LogInformation("Segment finished.");
+                    logger.LogInformation("Segment finished.");
+
+                    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                }
+                else
+                {
+                    logger.LogInformation("No motion detected.");
+                }
+
+                ffmpegRecorderService.DeleteOldRecordings();
+            }
+            catch (OperationCanceledException)
+            {
+                logger.LogInformation("Worker stopping.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred during recording.");
+            }
         }
     }
 }
