@@ -80,6 +80,56 @@ public sealed class FfmpegRecorderService
         }
     }
 
+    public async Task RecordBufferSegmentAsync(CancellationToken ct)
+    {
+        ValidateSettings();
+
+        Directory.CreateDirectory(cameraSettings.TempBufferFolder);
+
+        var fileName = $"buffer_{DateTime.Now:yyyyMMdd_HHmmss}.mp4";
+
+        var finalFile = Path.Combine(cameraSettings.TempBufferFolder, fileName);
+        var temporaryFile = Path.ChangeExtension(finalFile, ".recording");
+
+        var arguments = $"-rtsp_transport tcp -i \"{cameraSettings.RtspUrl}\" -t {cameraSettings.BufferSegmentSeconds} -c copy -f mp4 \"{temporaryFile}\"";
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = cameraSettings.FfmpegPath,
+            Arguments = arguments,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = Process.Start(startInfo);
+
+        if (process == null)
+        {
+            throw new InvalidOperationException("FFmpeg buffer process could not be started.");
+        }
+
+        logger.LogInformation("FFmpeg buffer recording started.");
+
+        var errorTask = process.StandardError.ReadToEndAsync();
+
+        await process.WaitForExitAsync(ct);
+
+        var error = await errorTask;
+
+        if (process.ExitCode == 0)
+        {
+            File.Move(temporaryFile, finalFile, overwrite: true);
+
+            logger.LogInformation("FFmpeg buffer segment finished: {file}", fileName);
+        }
+        else
+        {
+            logger.LogError("FFmpeg buffer failed with exit code {exitCode}. Error: {error}", process.ExitCode, error);
+        }
+    }
+
     public void DeleteOldRecordings()
     {
         if (!Directory.Exists(cameraSettings.OutputFolder))
@@ -103,6 +153,67 @@ public sealed class FfmpegRecorderService
             }
         }
     }
+
+    public void SavePreMotionBuffer()
+    {
+        ValidateSettings();
+
+        if (!Directory.Exists(cameraSettings.TempBufferFolder))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(cameraSettings.OutputFolder);
+
+        var segmentsCount = (int)Math.Ceiling(
+            (double)cameraSettings.PreMotionSeconds / cameraSettings.BufferSegmentSeconds);
+
+        var files = Directory
+            .GetFiles(cameraSettings.TempBufferFolder, "*.mp4")
+            .Select(file => new FileInfo(file))
+            .OrderByDescending(file => file.CreationTime)
+            .Take(segmentsCount)
+            .OrderBy(file => file.CreationTime)
+            .ToList();
+
+        foreach (var file in files)
+        {
+            var newFileName = file.Name.Replace("buffer_", "camera_");
+            var destinationPath = Path.Combine(cameraSettings.OutputFolder, newFileName);
+
+            if (!File.Exists(destinationPath))
+            {
+                File.Copy(file.FullName, destinationPath);
+                logger.LogInformation("Saved pre-motion buffer segment: {file}", newFileName);
+            }
+        }
+    }
+
+    public void DeleteOldBufferSegments()
+    {
+        if (!Directory.Exists(cameraSettings.TempBufferFolder))
+        {
+            return;
+        }
+
+        var keepSeconds = cameraSettings.PreMotionSeconds + cameraSettings.BufferSegmentSeconds;
+
+        var deleteOlderThan = DateTime.Now.AddSeconds(-keepSeconds);
+
+        var files = Directory
+            .GetFiles(cameraSettings.TempBufferFolder, "*.mp4")
+            .Select(file => new FileInfo(file));
+
+        foreach (var file in files)
+        {
+            if (file.CreationTime < deleteOlderThan)
+            {
+                file.Delete();
+                logger.LogInformation("Deleted old buffer segment: {file}", file.Name);
+            }
+        }
+    }
+
     private void ValidateSettings()
     {
         if (string.IsNullOrWhiteSpace(cameraSettings.RtspUrl))
@@ -133,6 +244,21 @@ public sealed class FfmpegRecorderService
         if (cameraSettings.RetentionDays <= 0)
         {
             throw new InvalidOperationException("Retention days must be greater than zero.");
+        }
+
+        if (string.IsNullOrWhiteSpace(cameraSettings.TempBufferFolder))
+        {
+            throw new InvalidOperationException("Temp buffer folder is not configured.");
+        }
+
+        if (cameraSettings.BufferSegmentSeconds <= 0)
+        {
+            throw new InvalidOperationException("Buffer segment seconds must be greater than zero.");
+        }
+
+        if (cameraSettings.PreMotionSeconds <= 0)
+        {
+            throw new InvalidOperationException("Pre-motion seconds must be greater than zero.");
         }
     }
 }

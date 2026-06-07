@@ -29,22 +29,21 @@ public sealed class Worker : BackgroundService
         {
             try
             {
+                await ffmpegRecorderService.RecordBufferSegmentAsync(stoppingToken);
+
                 var motionDetected = await cameraEventService.IsMotionDetectedAsync(stoppingToken);
                 if (motionDetected)
                 {
-                    logger.LogInformation("Motion detected. Recording segment started.");
+                    logger.LogInformation("Motion detected. Saving pre-motion buffer.");
 
-                    await ffmpegRecorderService.RecordSegmentAsync(stoppingToken);
-
-                    logger.LogInformation("Segment finished.");
-
-                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+                    ffmpegRecorderService.SavePreMotionBuffer();
                 }
                 else
                 {
                     logger.LogInformation("No motion detected.");
                 }
 
+                ffmpegRecorderService.DeleteOldBufferSegments();
                 ffmpegRecorderService.DeleteOldRecordings();
             }
             catch (OperationCanceledException)

@@ -8,4 +8,7 @@ public class CameraSettings
     public string FfmpegPath { get; set; } = string.Empty;
     public int SegmentMinutes { get; set; }
     public int RetentionDays { get; set; }
+    public string TempBufferFolder { get; set; } = string.Empty;
+    public int BufferSegmentSeconds { get; set; }
+    public int PreMotionSeconds { get; set; }
 }
