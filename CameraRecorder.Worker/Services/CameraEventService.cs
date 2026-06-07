@@ -17,7 +17,7 @@ public sealed class CameraEventService(ILogger<CameraEventService> logger, IOpti
 
         var image1Bytes = await httpClient.GetByteArrayAsync(url, ct);
 
-        await Task.Delay(TimeSpan.FromSeconds(5), ct);
+        await Task.Delay(TimeSpan.FromMilliseconds(500), ct);
 
         var image2Bytes = await httpClient.GetByteArrayAsync(url, ct);
 

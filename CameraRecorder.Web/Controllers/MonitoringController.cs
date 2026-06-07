@@ -8,11 +8,11 @@ namespace CameraRecorder.Web.Controllers;
 public sealed class MonitoringController(IRecordingFileService recordingFileService) : Controller
 {
     [HttpGet]
-    public IActionResult Index(DateOnly? selectedDate)
+    public IActionResult Index(DateOnly? selectedDate, int page, CancellationToken ct)
     {
         var date = selectedDate ?? DateOnly.FromDateTime(DateTime.Today);
 
-        var model = recordingFileService.GetRecordingsByDate(date);
+        var model = recordingFileService.GetRecordingsByDate(date, page, ct);
 
         return View(model);
     }

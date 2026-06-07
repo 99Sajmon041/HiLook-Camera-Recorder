@@ -33,6 +33,11 @@ builder.Services.AddHttpClient<CameraEventService>()
         };
     });
 
+builder.Services.AddWindowsService(options =>
+{
+    options.ServiceName = "Camera Recorder Worker";
+});
+
 builder.Services.AddHostedService<Worker>();
 
 builder.Services.AddSingleton<FfmpegRecorderService>();

@@ -5,6 +5,7 @@
 <form method="get" asp-action="Index" class="d-flex gap-2 align-items-center mb-3">
     <label for="inputDate" class="form-label mb-0">Datum záznamů</label>
     <input id="inputDate" type="date" name="selectedDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" class="form-control w-auto" onchange="this.form.submit()" />
+    <input type="hidden" name="page" value="1" />
 </form>
 
 <table class="table table-striped align-middle">
@@ -18,9 +19,9 @@
         </tr>
     </thead>
     <tbody>
-        @if (Model.Recordings.Count > 0)
+        @if (Model.Records.Items.Count > 0)
         {
-            @foreach (var item in Model.Recordings)
+            @foreach (var item in Model.Records.Items)
             {
                 <tr>
                     <td>@item.FileName</td>
@@ -55,3 +56,52 @@
         }
     </tbody>
 </table>
+
+@if (Model.Records.TotalItems > Model.Records.PageSize)
+{
+    var pages = Model.Records.PagesCount;
+    var current = Model.Records.Page;
+
+    var pageNumbers = pages <= 10
+        ? Enumerable.Range(1, pages)
+        : new[] { 1, current - 1, current, current + 1, pages }
+            .Where(x => x >= 1 && x <= pages)
+            .Distinct()
+            .OrderBy(x => x);
+
+    <nav class="d-flex justify-content-center mt-3">
+        <ul class="pagination">
+
+            <li class="page-item @(Model.Records.CanGoPrevious ? "" : "disabled")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(current - 1)"
+                   asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")">
+                    Předchozí
+                </a>
+            </li>
+
+            @foreach (var pageNumber in pageNumbers)
+            {
+                <li class="page-item @(pageNumber == current ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@pageNumber"
+                       asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")">
+                        @pageNumber
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.Records.CanGoNext ? "" : "disabled")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(current + 1)"
+                   asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")">
+                    Další
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+}

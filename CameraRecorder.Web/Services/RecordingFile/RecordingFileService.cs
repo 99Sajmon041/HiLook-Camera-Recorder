@@ -8,8 +8,10 @@ public sealed class RecordingFileService(IOptions<RecordingStorageSettings> opti
 {
     private readonly RecordingStorageSettings settings = options.Value;
 
-    public RecordingListViewModel GetRecordingsByDate(DateOnly selectedDate)
+    public RecordingListViewModel GetRecordingsByDate(DateOnly selectedDate, int page, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         var model = new RecordingListViewModel
         {
             SelectedDate = selectedDate
@@ -22,7 +24,7 @@ public sealed class RecordingFileService(IOptions<RecordingStorageSettings> opti
 
         var selectedDatetime = selectedDate.ToDateTime(TimeOnly.MinValue);
 
-        model.Recordings = Directory
+        var records = Directory
             .GetFiles(settings.RecordingsFolder, "*.mp4")
             .Select(file => new FileInfo(file))
             .Where(file => file.CreationTime.Date == selectedDatetime.Date)
@@ -31,10 +33,19 @@ public sealed class RecordingFileService(IOptions<RecordingStorageSettings> opti
             {
                 FileName = file.Name,
                 CreatedAt = file.CreationTime,
-                DurationTime = new TimeOnly(0, 10),
+                DurationTime = new TimeOnly(0, 1),
                 SizeBytes = file.Length,
                 ThumbnailPath = null
             })
+            .ToList();
+
+        model.Records.TotalItems = records.Count;
+        model.Records.Page = page;
+        model.Records.PageSize = 50;
+
+        model.Records.Items = records
+            .Skip((page - 1) * model.Records.PageSize)
+            .Take(model.Records.PageSize)
             .ToList();
 
         return model;

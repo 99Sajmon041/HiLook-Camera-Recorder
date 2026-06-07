@@ -38,7 +38,7 @@ public sealed class Worker : BackgroundService
 
                     logger.LogInformation("Segment finished.");
 
-                    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
                 }
                 else
                 {
@@ -55,6 +55,7 @@ public sealed class Worker : BackgroundService
             catch (Exception ex)
             {
                 logger.LogError(ex, "An error occurred during recording.");
+                await Task.Delay(TimeSpan.FromSeconds(20), stoppingToken);
             }
         }
     }
