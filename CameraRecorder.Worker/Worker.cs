@@ -29,21 +29,8 @@ public sealed class Worker : BackgroundService
         {
             try
             {
-                await ffmpegRecorderService.RecordBufferSegmentAsync(stoppingToken);
+                await ffmpegRecorderService.RecordSegmentAsync(stoppingToken);
 
-                var motionDetected = await cameraEventService.IsMotionDetectedAsync(stoppingToken);
-                if (motionDetected)
-                {
-                    logger.LogInformation("Motion detected. Saving pre-motion buffer.");
-
-                    ffmpegRecorderService.SavePreMotionBuffer();
-                }
-                else
-                {
-                    logger.LogInformation("No motion detected.");
-                }
-
-                ffmpegRecorderService.DeleteOldBufferSegments();
                 ffmpegRecorderService.DeleteOldRecordings();
             }
             catch (OperationCanceledException)
@@ -54,6 +41,7 @@ public sealed class Worker : BackgroundService
             catch (Exception ex)
             {
                 logger.LogError(ex, "An error occurred during recording.");
+
                 await Task.Delay(TimeSpan.FromSeconds(20), stoppingToken);
             }
         }

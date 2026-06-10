@@ -1,7 +1,9 @@
-﻿using SixLabors.ImageSharp.PixelFormats;
+﻿using CameraRecorder.Worker.Models;
 using CameraRecorder.Worker.Settings;
 using Microsoft.Extensions.Options;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+
 
 namespace CameraRecorder.Worker.Services;
 
@@ -11,7 +13,7 @@ public sealed class CameraEventService(ILogger<CameraEventService> logger, IOpti
     private readonly IsapiSettings isapiSettings = isapiSettings.Value;
     private readonly HttpClient httpClient = httpClient;
 
-    public async Task<bool> IsMotionDetectedAsync(CancellationToken ct)
+    public async Task<MotionDetectionResult> DetectMotionAsync(CancellationToken ct)
     {
         var url = $"{isapiSettings.BaseUrl}/ISAPI/Streaming/channels/101/picture";
 
@@ -37,7 +39,10 @@ public sealed class CameraEventService(ILogger<CameraEventService> logger, IOpti
                 var pixel1 = image1[x, y];
                 var pixel2 = image2[x, y];
 
-                var diff = Math.Abs(pixel1.R - pixel2.R) + Math.Abs(pixel1.G - pixel2.G) + Math.Abs(pixel1.B - pixel2.B);
+                var diff =
+                    Math.Abs(pixel1.R - pixel2.R) +
+                    Math.Abs(pixel1.G - pixel2.G) +
+                    Math.Abs(pixel1.B - pixel2.B);
 
                 if (diff > 50)
                 {
@@ -52,6 +57,10 @@ public sealed class CameraEventService(ILogger<CameraEventService> logger, IOpti
 
         logger.LogInformation("Motion difference: {difference:F2}%", differencePercent);
 
-        return differencePercent > 15;
+        return new MotionDetectionResult
+        {
+            IsMotionDetected = differencePercent > 15,
+            DifferencePercent = differencePercent
+        };
     }
 }

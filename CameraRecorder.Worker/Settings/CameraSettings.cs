@@ -6,9 +6,7 @@ public class CameraSettings
     public string RtspUrl { get; set; } = string.Empty;
     public string OutputFolder { get; set; } = string.Empty;
     public string FfmpegPath { get; set; } = string.Empty;
+    public string MotionEventsFilePath { get; set; } = string.Empty;
     public int SegmentMinutes { get; set; }
     public int RetentionDays { get; set; }
-    public string TempBufferFolder { get; set; } = string.Empty;
-    public int BufferSegmentSeconds { get; set; }
-    public int PreMotionSeconds { get; set; }
 }

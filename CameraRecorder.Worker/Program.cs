@@ -15,6 +15,8 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Logging.AddSerilog();
 
+builder.Services.AddSingleton<MotionEventService>();
+
 builder.Services.Configure<CameraSettings>(
     builder.Configuration.GetSection("CameraSettings"));
 
