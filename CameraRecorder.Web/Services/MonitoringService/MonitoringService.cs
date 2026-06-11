@@ -2,6 +2,7 @@
 using CameraRecorder.Web.ViewModels.Monitoring;
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using System.Text.Json;
 
 namespace CameraRecorder.Web.Services.MonitoringService;
 
@@ -42,14 +43,57 @@ public class MonitoringService(IOptions<RecordingStorageSettings> options) : IMo
             .ToList();
 
         model.Segments = records;
+        model.MotionEvents = LoadMotionEvents(selectedDate);
 
         return model;
     }
+
     private DateTime GetStartTimeOfRecord(string fileName)
     {
         string timestamp = Path.GetFileNameWithoutExtension(fileName)
             .Replace("camera_", "");
 
         return DateTime.ParseExact(timestamp, "yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+    }
+
+    private List<MotionEventViewModel> LoadMotionEvents(DateOnly selectedDate)
+    {
+        var result = new List<MotionEventViewModel>();
+
+        if (string.IsNullOrWhiteSpace(settings.MotionEventsFilePath))
+        {
+            return result;
+        }
+
+        if (!File.Exists(settings.MotionEventsFilePath))
+        {
+            return result;
+        }
+
+        var selectedDateTime = selectedDate.ToDateTime(TimeOnly.MinValue);
+
+        foreach (var line in File.ReadLines(settings.MotionEventsFilePath))
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            var motionEvent = JsonSerializer.Deserialize<MotionEventViewModel>(line);
+
+            if (motionEvent is null)
+            {
+                continue;
+            }
+
+            if (motionEvent.DetectedAt.Date == selectedDateTime.Date)
+            {
+                result.Add(motionEvent);
+            }
+        }
+
+        return result
+            .OrderBy(x => x.DetectedAt)
+            .ToList();
     }
 }
