@@ -1,107 +1,73 @@
-﻿@model RecordingListViewModel
+﻿@model MonitoringTimelineViewModel
 
-<h1>Záznamy</h1>
+<h1>Přehrávání</h1>
 
 <form method="get" asp-action="Index" class="d-flex gap-2 align-items-center mb-3">
-    <label for="inputDate" class="form-label mb-0">Datum záznamů</label>
+    <label for="inputDate" class="form-label mb-0">Datum</label>
     <input id="inputDate" type="date" name="selectedDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" class="form-control w-auto" onchange="this.form.submit()" />
-    <input type="hidden" name="page" value="1" />
 </form>
 
-<table class="table table-striped align-middle">
-    <thead>
-        <tr>
-            <th>Název souboru</th>
-            <th>Vytvořeno</th>
-            <th>Velikost (MB)</th>
-            <th>Délka (minuty)</th>
-            <th>Akce</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model.Records.Items.Count > 0)
-        {
-            @foreach (var item in Model.Records.Items)
-            {
-                <tr>
-                    <td>@item.FileName</td>
-                    <td>@item.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")</td>
-                    <td>@(item.SizeBytes / 1024 / 1024) MB</td>
-                    <td>@item.DurationTime.ToString("HH:mm")</td>
-                    <td>
-                        <div class="d-flex gap-2">
-                            <a class="btn btn-outline-primary btn-sm" asp-controller="Monitoring" asp-action="Detail" asp-route-fileName="@item.FileName">
-                                Přehrát
-                            </a>
-
-                            <form method="post" asp-controller="Monitoring" asp-action="Delete" asp-route-fileName="@item.FileName" asp-route-date="@item.CreatedAt.ToString("yyyy-MM-dd")" onsubmit="return confirm('Opravdu chcete smazat tento záznam?');">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    Smazat
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            }
-        }
-        else
-        {
-            <tr>
-                <td colspan="5" class="text-center">
-                    <div class="bg-warning text-dark p-2 rounded">
-                        Žádné záznamy pro tento den.
-                    </div>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-@if (Model.Records.TotalItems > Model.Records.PageSize)
+@if (Model.Segments.Count == 0)
 {
-    var pages = Model.Records.PagesCount;
-    var current = Model.Records.Page;
+    <div class="alert alert-warning">
+        Pro tento den nejsou žádné záznamy.
+    </div>
+}
+else
+{
+    <video id="recordPlayer" controls class="w-100 rounded shadow-sm mb-3">
+        <source src="@Url.Action("Video", "Monitoring", new { fileName = Model.Segments.First().FileName })" type="video/mp4" />
+    </video>
 
-    var pageNumbers = pages <= 10
-        ? Enumerable.Range(1, pages)
-        : new[] { 1, current - 1, current, current + 1, pages }
-            .Where(x => x >= 1 && x <= pages)
-            .Distinct()
-            .OrderBy(x => x);
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Časová osa</h5>
 
-    <nav class="d-flex justify-content-center mt-3">
-        <ul class="pagination">
+            <div class="timeline">
+                @foreach (var segment in Model.Segments)
+                {
+                    var dayStart = Model.SelectedDate.ToDateTime(TimeOnly.MinValue);
+                    var left = (segment.StartTime - dayStart).TotalMinutes / 1440 * 100;
+                    var width = (segment.EndTime - segment.StartTime).TotalMinutes / 1440 * 100;
 
-            <li class="page-item @(Model.Records.CanGoPrevious ? "" : "disabled")">
-                <a class="page-link"
-                   asp-action="Index"
-                   asp-route-page="@(current - 1)"
-                   asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")">
-                    Předchozí
-                </a>
-            </li>
+                    <button type="button"
+                            class="timeline-segment"
+                            style="left:@left.ToString(System.Globalization.CultureInfo.InvariantCulture)%; width:@width.ToString(System.Globalization.CultureInfo.InvariantCulture)%"
+                            title="@segment.StartTime.ToString("HH:mm:ss") - @segment.EndTime.ToString("HH:mm:ss")"
+                            onclick="playSegment('@segment.FileName')">
+                    </button>
+                }
 
-            @foreach (var pageNumber in pageNumbers)
-            {
-                <li class="page-item @(pageNumber == current ? "active" : "")">
-                    <a class="page-link"
-                       asp-action="Index"
-                       asp-route-page="@pageNumber"
-                       asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")">
-                        @pageNumber
-                    </a>
-                </li>
-            }
+                @foreach (var motion in Model.MotionEvents)
+                {
+                    var dayStart = Model.SelectedDate.ToDateTime(TimeOnly.MinValue);
+                    var left = (motion.DetectedAt - dayStart).TotalMinutes / 1440 * 100;
 
-            <li class="page-item @(Model.Records.CanGoNext ? "" : "disabled")">
-                <a class="page-link"
-                   asp-action="Index"
-                   asp-route-page="@(current + 1)"
-                   asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")">
-                    Další
-                </a>
-            </li>
+                    <div class="timeline-motion"
+                         style="left:@left.ToString(System.Globalization.CultureInfo.InvariantCulture)%"
+                         title="Pohyb: @motion.DetectedAt.ToString("HH:mm:ss") / @motion.DifferencePercent.ToString("F2")%">
+                    </div>
+                }
+            </div>
 
-        </ul>
-    </nav>
+            <div class="d-flex justify-content-between small text-muted mt-1">
+                <span>00:00</span>
+                <span>06:00</span>
+                <span>12:00</span>
+                <span>18:00</span>
+                <span>24:00</span>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function playSegment(fileName) {
+            const player = document.getElementById('recordPlayer');
+            player.src = `/Monitoring/Video?fileName=${encodeURIComponent(fileName)}`;
+            player.load();
+            player.play();
+        }
+    </script>
 }

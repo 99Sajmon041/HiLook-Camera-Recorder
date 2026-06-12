@@ -6,14 +6,12 @@ using System.Text.Json;
 
 namespace CameraRecorder.Worker.Services;
 
-public sealed class MotionEventService(
-    IOptions<CameraSettings> cameraSettings,
-    ILogger<MotionEventService> logger)
+public sealed class MotionEventService(IOptions<CameraSettings> cameraSettings, ILogger<MotionEventService> logger)
 {
     private readonly CameraSettings cameraSettings = cameraSettings.Value;
     private readonly ILogger<MotionEventService> logger = logger;
 
-    public async Task SaveMoutionEventAsync(double differencePercent, CancellationToken ct)
+    public async Task SaveMotionEventAsync(double differencePercent, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(cameraSettings.MotionEventsFilePath))
         {

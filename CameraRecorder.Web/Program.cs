@@ -14,8 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IAccountService, AccountService>();
-builder.Services.AddScoped<IRecordingFileService, RecordingFileService>();
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
+builder.Services.AddScoped<IRecordingFileService, RecordingFileService>();
 
 builder.Services.AddDbContext<CameraRecorderDbContext>(options =>
 {

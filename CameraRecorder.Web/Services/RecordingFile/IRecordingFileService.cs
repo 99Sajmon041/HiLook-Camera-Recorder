@@ -1,11 +1,6 @@
-﻿using CameraRecorder.Web.ViewModels.Monitoring;
-
-namespace CameraRecorder.Web.Services.RecordingFile;
+﻿namespace CameraRecorder.Web.Services.RecordingFile;
 
 public interface IRecordingFileService
 {
-    RecordingListViewModel GetRecordingsByDate(DateOnly selectedDate, int page, CancellationToken ct);
-    RecordingDetailViewModel GetRecordingDetail(string fileName);
     string GetSafeFilePath(string fileName);
-    (bool, string) DeleteRecord(string fileName);
 }
