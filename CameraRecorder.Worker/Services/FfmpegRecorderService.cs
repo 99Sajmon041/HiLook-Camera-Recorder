@@ -26,7 +26,11 @@ public sealed class FfmpegRecorderService
         var finalFile = Path.Combine(cameraSettings.OutputFolder, fileName);
         var temporaryFile = Path.ChangeExtension(finalFile, ".recording");
 
-        var arguments = $"-rtsp_transport tcp -i \"{cameraSettings.RtspUrl}\" -t {cameraSettings.SegmentMinutes * 60} -c copy -f mp4 \"{temporaryFile}\"";
+        var arguments =
+            $"-rtsp_transport tcp -i \"{cameraSettings.RtspUrl}\" " +
+            $"-t {cameraSettings.SegmentMinutes * 60} " +
+            $"-c copy -movflags +faststart -f mp4 \"{temporaryFile}\"";
+        
         var startInfo = new ProcessStartInfo
         {
             FileName = cameraSettings.FfmpegPath,
