@@ -84,5 +84,23 @@ else
             player.load();
             player.play();
         }
+
+        function showTimelineTooltip(event, element) {
+            const tooltip = document.getElementById('timelineTooltip');
+            tooltip.textContent = element.dataset.time;
+            tooltip.style.display = 'block';
+            moveTimelineTooltip(event);
+        }
+
+        function moveTimelineTooltip(event) {
+            const tooltip = document.getElementById('timelineTooltip');
+            tooltip.style.left = event.pageX + 12 + 'px';
+            tooltip.style.top = event.pageY - 32 + 'px';
+        }
+
+        function hideTimelineTooltip() {
+            const tooltip = document.getElementById('timelineTooltip');
+            tooltip.style.display = 'none';
+        }
     </script>
 }
