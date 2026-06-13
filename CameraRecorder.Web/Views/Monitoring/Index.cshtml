@@ -4,7 +4,12 @@
 
 <form method="get" asp-action="Index" class="d-flex gap-2 align-items-center mb-3">
     <label for="inputDate" class="form-label mb-0">Datum</label>
-    <input id="inputDate" type="date" name="selectedDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" class="form-control w-auto" onchange="this.form.submit()" />
+    <input id="inputDate"
+           type="date"
+           name="selectedDate"
+           value="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+           class="form-control w-auto"
+           onchange="this.form.submit()" />
 </form>
 
 @if (Model.Segments.Count == 0)
@@ -23,30 +28,24 @@ else
         <div class="card-body">
             <h5 class="card-title">Časová osa</h5>
 
-            <div class="timeline">
-                @foreach (var segment in Model.Segments)
+            <div class="timeline-grid">
+                @foreach (var slot in Model.Slots)
                 {
-                    var dayStart = Model.SelectedDate.ToDateTime(TimeOnly.MinValue);
-                    var left = (segment.StartTime - dayStart).TotalMinutes / 1440 * 100;
-                    var width = (segment.EndTime - segment.StartTime).TotalMinutes / 1440 * 100;
+                    var cssClass = "timeline-slot-empty";
+
+                    if (slot.HasRecording)
+                    {
+                        cssClass = slot.HasMotion
+                        ? "timeline-slot-motion"
+                        : "timeline-slot-recording";
+                    }
 
                     <button type="button"
-                            class="timeline-segment"
-                            style="left:@left.ToString(System.Globalization.CultureInfo.InvariantCulture)%; width:@width.ToString(System.Globalization.CultureInfo.InvariantCulture)%"
-                            title="@segment.StartTime.ToString("HH:mm:ss") - @segment.EndTime.ToString("HH:mm:ss")"
-                            onclick="playSegment('@segment.FileName')">
+                            class="timeline-slot @cssClass"
+                            title="@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")"
+                            disabled="@(!slot.HasRecording)"
+                            onclick="playSegment('@slot.FileName', this)">
                     </button>
-                }
-
-                @foreach (var motion in Model.MotionEvents)
-                {
-                    var dayStart = Model.SelectedDate.ToDateTime(TimeOnly.MinValue);
-                    var left = (motion.DetectedAt - dayStart).TotalMinutes / 1440 * 100;
-
-                    <div class="timeline-motion"
-                         style="left:@left.ToString(System.Globalization.CultureInfo.InvariantCulture)%"
-                         title="Pohyb: @motion.DetectedAt.ToString("HH:mm:ss") / @motion.DifferencePercent.ToString("F2")%">
-                    </div>
                 }
             </div>
 
@@ -57,13 +56,29 @@ else
                 <span>18:00</span>
                 <span>24:00</span>
             </div>
+
+            <div class="d-flex gap-3 small mt-3">
+                <span><span class="legend-box bg-recording"></span> Záznam</span>
+                <span><span class="legend-box bg-motion"></span> Pohyb</span>
+                <span><span class="legend-box bg-empty"></span> Bez záznamu</span>
+            </div>
         </div>
     </div>
 }
 
 @section Scripts {
     <script>
-        function playSegment(fileName) {
+        function playSegment(fileName, button) {
+            if (!fileName) {
+                return;
+            }
+
+            document
+                .querySelectorAll(".timeline-slot")
+                .forEach(x => x.classList.remove("timeline-slot-active"));
+
+            button.classList.add("timeline-slot-active");
+
             const player = document.getElementById('recordPlayer');
             player.src = `/Monitoring/Video?fileName=${encodeURIComponent(fileName)}`;
             player.load();

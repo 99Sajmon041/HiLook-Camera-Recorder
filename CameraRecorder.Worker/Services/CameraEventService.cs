@@ -59,7 +59,7 @@ public sealed class CameraEventService(ILogger<CameraEventService> logger, IOpti
 
         return new MotionDetectionResult
         {
-            IsMotionDetected = differencePercent > 15,
+            IsMotionDetected = differencePercent > 10,
             DifferencePercent = differencePercent
         };
     }

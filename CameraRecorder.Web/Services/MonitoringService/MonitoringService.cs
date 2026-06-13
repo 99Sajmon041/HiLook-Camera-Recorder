@@ -44,6 +44,7 @@ public class MonitoringService(IOptions<RecordingStorageSettings> options) : IMo
 
         model.Segments = records;
         model.MotionEvents = LoadMotionEvents(selectedDate);
+        model.Slots = CreateTimelineSlots(model);
 
         return model;
     }
@@ -95,5 +96,31 @@ public class MonitoringService(IOptions<RecordingStorageSettings> options) : IMo
         return result
             .OrderBy(x => x.DetectedAt)
             .ToList();
+    }
+
+    private List<TimelineSlotViewModel> CreateTimelineSlots(MonitoringTimelineViewModel model)
+    {
+        var slots = new List<TimelineSlotViewModel>();
+        var dayStart = model.SelectedDate.ToDateTime(TimeOnly.MinValue);
+
+        for (var i = 0; i < 144; i++)
+        {
+            var slotStart = dayStart.AddMinutes(i * 10);
+            var slotEnd = slotStart.AddMinutes(10);
+
+            var segment = model.Segments.FirstOrDefault(x => x.StartTime < slotEnd && x.EndTime > slotStart);
+
+            var hasMotion = model.MotionEvents.Any(x => x.DetectedAt >= slotStart && x.DetectedAt < slotEnd);
+
+            slots.Add(new TimelineSlotViewModel
+            {
+                StartTime = slotStart,
+                EndTime = slotEnd,
+                FileName = segment?.FileName,
+                HasMotion = hasMotion
+            });
+        }
+
+        return slots;
     }
 }
